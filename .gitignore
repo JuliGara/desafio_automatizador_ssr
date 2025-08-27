@@ -1,0 +1,59 @@
+# === Entornos de Python ===
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+.eggs/
+.venv/
+env/
+venv/
+
+# === Archivos de dependencias y cachés ===
+pip-log.txt
+pip-delete-this-directory.txt
+*.log
+*.pot
+*.pyc
+*.pkl
+
+# === Archivos de Jupyter/VSCode ===
+.ipynb_checkpoints/
+.vscode/
+.idea/
+
+# === Archivos del sistema (Windows, macOS) ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === Archivos de Docker ===
+mysql-data/
+*.pid
+*.sock
+
+# === Datos procesados / salidas temporales ===
+data/raw/
+data/processed/
+salidas_parte2/
+
+# === Videos grabados de la parte 3 ===
+*.mp4
+*.mov
+*.avi
+*.mkv
+
+# === Archivos de Google Sheets exportados ===
+*.xlsx
+*.xls
+*.ods
+*.csv~   # backups de LibreOffice
+~$*.xls* # archivos temporales de Excel
+
+# === Otros ===
+*.zip
+*.tar
+*.gz
+*.7z

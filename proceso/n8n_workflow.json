@@ -1,0 +1,244 @@
+{
+  "name": "Automated Email Price List Processing and ClickUp Integration Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyX",
+              "value": 5,
+              "unit": "minutes"
+            }
+          ]
+        },
+        "filters": {
+          "q": "has:attachment (subject:price OR subject:pricing OR subject:list OR body:price OR body:pricing OR body:list)"
+        }
+      },
+      "id": "0d8a7dde-9f75-420b-b24f-2b7e42800cae",
+      "name": "Monitor Email for Price Lists",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "id-1",
+              "leftValue": "={{ $('Monitor Email for Price Lists').item.json.attachments }}",
+              "operator": {
+                "type": "array",
+                "operation": "notEmpty"
+              }
+            },
+            {
+              "id": "id-2",
+              "leftValue": "={{ $('Monitor Email for Price Lists').item.json.attachments.some(att => att.filename && (att.filename.toLowerCase().endsWith('.xlsx') || att.filename.toLowerCase().endsWith('.xls') || att.filename.toLowerCase().endsWith('.csv') || att.filename.toLowerCase().endsWith('.pdf'))) }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "58a13975-6da9-46d5-be0d-82a6a027bd67",
+      "name": "Check if Email Has Attachments",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "team": "<UNKNOWN>",
+        "space": "<UNKNOWN>",
+        "folder": "<UNKNOWN>",
+        "list": "<UNKNOWN>",
+        "name": "={{ 'Price List - ' + $('Extract Email Data').item.json.providerName + ' - ' + $now.format('yyyy-MM-dd') }}",
+        "additionalFields": {
+          "customFieldsJson": "=[ {\"id\": \"provider_name\", \"value\": \"{{ $('Extract Email Data').item.json.providerName }}\"}, {\"id\": \"reception_date\", \"value\": \"{{ $now.format('yyyy-MM-dd') }}\"} ]",
+          "content": "={{ 'Email Subject: ' + $('Monitor Email for Price Lists').item.json.subject + '\\n\\nProvider: ' + $('Extract Email Data').item.json.providerName + '\\n\\nReceived: ' + $now.format('yyyy-MM-dd HH:mm') }}",
+          "priority": 3,
+          "status": "Nueva Lista"
+        }
+      },
+      "id": "c67e250e-5df5-45c1-a975-1fc2968a3615",
+      "name": "Create ClickUp Task",
+      "type": "n8n-nodes-base.clickUp",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "=🔔 **New Price List Processed!**\n\n📧 **Provider:** {{ $('Extract Email Data').item.json.provider || 'Unknown Provider' }}\n✅ **ClickUp Task:** Successfully created\n📎 **Files:** {{ $('Extract Email Data').item.json.attachmentCount || 0 }} attachment(s) processed\n🔗 **Task Link:** {{ $('Create ClickUp Task').item.json.url || 'Task created successfully' }}\n\n*Automated processing complete - ready for review!*",
+        "options": {
+          "username": "Price List Bot",
+          "wait": true
+        }
+      },
+      "id": "cbf0c777-92f9-4fc9-87ef-7cca5d2e246c",
+      "name": "Notify Discord Channel",
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        0
+      ],
+      "webhookId": "f8a30d97-2bfd-43e0-82eb-9d5ae7ff37e4"
+    },
+    {
+      "parameters": {
+        "binaryData": true,
+        "parents": [
+          "DRIVE_FOLDER_ID"
+        ],
+        "options": {}
+      },
+      "id": "a1752f7b-af53-473e-b976-1d718de4ea90",
+      "name": "Drive - Upload",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "oldVersionNotice": "",
+        "authentication": "oAuth2",
+        "resource": "file",
+        "operation": "share",
+        "fileId": "={{$json[\"id\"]}}",
+        "permissionsUi": {},
+        "options": {}
+      },
+      "id": "a32b9076-e9e4-41ab-a2ac-c09b2f19b9b3",
+      "name": "Drive - Share",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 2,
+      "position": [
+        624,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get"
+      },
+      "id": "5da70b4c-b2cf-4f1d-854e-c84cebaa4717",
+      "name": "Drive - Get Link",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 2,
+      "position": [
+        816,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Monitor Email for Price Lists": {
+      "main": [
+        [
+          {
+            "node": "Check if Email Has Attachments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if Email Has Attachments": {
+      "main": [
+        [
+          {
+            "node": "Drive - Upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create ClickUp Task": {
+      "main": [
+        [
+          {
+            "node": "Notify Discord Channel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Discord Channel": {
+      "main": [
+        []
+      ]
+    },
+    "Drive - Upload": {
+      "main": [
+        [
+          {
+            "node": "Drive - Share",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Drive - Share": {
+      "main": [
+        [
+          {
+            "node": "Drive - Get Link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Drive - Get Link": {
+      "main": [
+        [
+          {
+            "node": "Create ClickUp Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3a597bc9-8624-4380-954f-6699ae022262",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d1aa79b5c8d03100b0339eb19eac277fe174c2531ccff6b29a0bfe07b9e5c567"
+  },
+  "id": "kI5avRpS0QArCCS8",
+  "tags": []
+}
